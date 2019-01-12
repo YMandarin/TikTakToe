@@ -1,21 +1,27 @@
 import pygame
 
-size = 600
+size = 300
 alter = int(size * 0.2)
 
 pygame.init()
 pygame.font.init()
 pygame.display.set_caption("TikTakToe")
 canvas = pygame.display.set_mode((size, size + alter))
+
 clock = pygame.time.Clock()
 
 blockSize = int(size / 3)
 
+orginalSize = 500
+print(orginalSize)
 cross = pygame.image.load("Cross.png")
 circle = pygame.image.load("Circle.png")
 
+
 firstCross = pygame.transform.scale(cross, (blockSize, blockSize))
 firstCircle = pygame.transform.scale(circle, (blockSize, blockSize))
+
+pygame.display.set_icon(pygame.transform.scale(cross,(32,32)))
 
 Ways = {
     (0, 0): [[(1, 0), (2, 0)], [(0, 1), (0, 2)], [(1, 1), (2, 2)]],
@@ -77,7 +83,7 @@ class Block:
 
 class Text:
 
-    def __init__(self, Text, pos, size = 50,color = Colors["Black"], Font="tahoma", bold = False, italic = False):
+    def __init__(self, Text, pos, size=50, color=Colors["Black"], Font="tahoma", bold=False, italic=False):
         self.text = Text
         self.pos = pos
         self.font = Font
@@ -87,14 +93,13 @@ class Text:
         self.color = color
         self.Font = pygame.font.SysFont(self.font, self.size, self.bold, self.italic)
         self.Text = self.Font.render(self.text, True, self.color)
-        self.surface = self.Text.get_rect()
-
-
+        self.surf = self.Text.get_rect()
+        self.surface = (self.surf[2],self.surf[3])
 
     def getSize(self):
         return self.surface
 
-    def setText(self,Text,size = -1,color = -1,Font = -1):
+    def setText(self, Text, size=-1, color=-1, Font=-1):
 
         self.text = Text
         if not size == -1:
@@ -104,25 +109,25 @@ class Text:
         if not Font == -1:
             self.font = Font
 
-
         self.render()
 
-    def setPos(self,pos):
+    def setPos(self, pos):
         self.pos = pos
         self.render()
 
-    def draw(self,surface = canvas):
-        x = self.pos[0]
-        y = self.pos[1]
-        w = self.surface[0]
-        h = self.surface[1]
+    def draw(self, surface=canvas):
+        x = int(self.pos[0])
+        y = int(self.pos[1])
+        w = int(self.surface[0])
+        h = int(self.surface[1])
 
-        surface.blit(self.Text,(x - w//2,y-h//2))
+        surface.blit(self.Text, (x - w // 2, y - h//2))
 
     def render(self):
         self.Font = pygame.font.SysFont(self.font, self.size, self.bold, self.italic)
         self.Text = self.Font.render(self.text, True, self.color)
-        self.surface = self.Text.get_rect()
+        self.surf = self.Text.get_rect()
+        self.surface = (self.surf[2], self.surf[3])
 
 
 Map = []
@@ -159,6 +164,10 @@ def check(x, y, type):
 Type = 0
 won = False
 reset = False
+winner = -1
+
+CrossWins = 0
+CircleWins = 0
 
 run = True
 
@@ -166,10 +175,17 @@ width = int(alter * 0.5)
 secondCross = pygame.transform.scale(cross, (width, width))
 secondCircle = pygame.transform.scale(circle, (width, width))
 
+a = 1
+
+CrossCounterText = "Cross: "
+CircleCounterText = "Circle: "
+
+CrossCounter = Text(CrossCounterText + "0",(size*0.15,size + alter//2),int(25 * (size/orginalSize)),Colors["DarkGray"])
+CircleCounter = Text(CircleCounterText + "0",(size*0.35,size + alter//2),int(25 * (size/orginalSize)),Colors["DarkGray"])
 
 def draw():
     canvas.fill(Colors["White"])
-    pygame.draw.rect(canvas, Colors["DarkGray"], (0, size, size, alter))
+    pygame.draw.rect(canvas, Colors["LightGray"], (0, size, size, alter))
 
     if Type == 1:
         canvas.blit(secondCircle, (int(size * 0.85) - width // 2, size + alter // 2 - width // 2))
@@ -181,6 +197,9 @@ def draw():
             if isinstance(i, Block):
                 i.draw()
 
+    CrossCounter.draw()
+    CircleCounter.draw()
+
     pygame.display.update()
 
 
@@ -189,14 +208,26 @@ while run:
     clock.tick(30)
 
     if won:
-        pygame.time.delay(50)
+        pygame.time.delay(75)
         for x2 in range(0, 3):
             for i2 in range(0, 3):
                 Map[x2][i2] = 0
         won = False
+        if winner == 1:
+            CircleWins+=1
+
+        elif winner == 0:
+            CrossWins += 1
+
+        winner = -1
+
+        CrossCounter.setText(CrossCounterText + str(CrossWins))
+        CircleCounter.setText(CircleCounterText + str(CircleWins))
+
+
 
     elif reset:
-        pygame.time.delay(50)
+        pygame.time.delay(75)
         for x2 in range(0, 3):
             for i2 in range(0, 3):
                 Map[x2][i2] = 0
@@ -224,6 +255,10 @@ while run:
 
                 if check(mouse[0], mouse[1], Type):
                     won = True
+                    winner = Type
+
+
+
 
                 if Type == 0:
                     Type = 1
